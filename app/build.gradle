@@ -2,5 +2,28 @@ plugins { id 'com.android.application' }
 android {
  namespace 'kr.local.roadsafety'
  compileSdk 35
- defaultConfig { applicationId 'kr.local.roadsafety'; minSdk 26; targetSdk 34; versionCode 5; versionName '0.5-dashboard' }
+ buildFeatures { buildConfig true }
+ signingConfigs {
+  release {
+   if (project.hasProperty('releaseStoreFile')) {
+    storeFile file(project.property('releaseStoreFile'))
+    storePassword project.property('releaseStorePassword')
+    keyAlias project.property('releaseKeyAlias')
+    keyPassword project.property('releaseKeyPassword')
+   }
+  }
+ }
+ defaultConfig {
+  applicationId 'kr.local.roadsafety'
+  minSdk 26
+  targetSdk 34
+  versionCode project.hasProperty('versionCodeOverride') ? project.property('versionCodeOverride').toInteger() : 6
+  versionName project.hasProperty('versionCodeOverride') ? project.property('versionCodeOverride').toString() : '0.6-updater'
+ }
+ buildTypes {
+  release {
+   minifyEnabled false
+   signingConfig signingConfigs.release
+  }
+ }
 }

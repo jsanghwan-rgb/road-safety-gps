@@ -28,3 +28,13 @@ GitHub 저장소 루트에 압축 해제된 파일/폴더를 업로드 후 Commi
 - 속도 숫자(km/h), 0~180km/h 반원형 게이지, 설정 경고 속도 초과 시 주황색 게이지 표시.
 - 지도 아래 계기판과 별도로 GPS 조작/설정 버튼은 화면 하단에 유지합니다.
 - GPS 속도 값이 없을 때는 -- 로 표시합니다.
+
+## v0.6 앱 내 업데이트 버튼
+- 앱 아래쪽의 `↻ 업데이트`를 누르면 공식 GitHub Releases의 최신 버전(v6, v7 등 숫자 태그)을 확인합니다.
+- 새 버전이 있으면 다운로드하고 Android 설치 승인 화면을 엽니다. APK를 직접 찾을 필요가 없습니다.
+- 공식 저장소의 `RoadSafetyGPS-release.apk`만 다운로드 대상으로 허용합니다.
+- `Build Android APK`(디버그 APK)는 앱 내 업데이트 대상이 **아닙니다**. 배포는 `Publish signed update APK` 워크플로로 진행합니다.
+- GitHub Repository Settings → Secrets and variables → Actions에서 `SIGNING_KEYSTORE_BASE64`, `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD` 4개를 **최초 1회** 등록해야 합니다. 키스토어 원본은 안전하게 백업하고 절대 GitHub 소스에 커밋하지 마세요.
+- 워크플로를 수동 실행할 때 `version_code`에 6, 다음 배포에는 7처럼 증가하는 정수를 입력합니다. 배포 후 앱에서 업데이트 버튼을 누르면 됩니다.
+- **중요:** 이전 GitHub Actions의 `assembleDebug` APK는 매번 다른 디버그 서명 키일 수 있어 서명된 릴리스 APK로 바로 덮어쓰기 실패할 수 있습니다. 처음 한 번은 기존 시험판 삭제 후 서명된 v6 설치가 필요할 수 있으며, 삭제 전에 앱 설정을 백업하세요. 이후에는 **동일한 릴리스 서명 키**를 계속 사용해야 앱 내 업데이트가 가능합니다.
+- GitHub Releases가 없거나, 인터넷 연결이 없거나, 서명 키가 달라진 경우 업데이트할 수 없습니다.

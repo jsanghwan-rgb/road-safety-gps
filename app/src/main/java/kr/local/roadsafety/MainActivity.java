@@ -18,6 +18,7 @@ public class MainActivity extends Activity {
  private WebView map;
  private TextView speedText,status,thresholdText;
  private SpeedGauge speedGauge;
+ private UpdateManager updateManager;
  private Switch voiceSwitch,vibrationSwitch;
  private boolean follow=true,mapReady=false;
  private int alertSpeed=80;
@@ -34,6 +35,7 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle state){super.onCreate(state);
   alertSpeed=getSharedPreferences("settings",MODE_PRIVATE).getInt("threshold",80);
   getWindow().setStatusBarColor(Color.rgb(12,28,46));getWindow().setNavigationBarColor(Color.rgb(12,28,46));
+  updateManager=new UpdateManager(this);
   LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(239,246,253));
   TextView title=new TextView(this);title.setText("도로안심 GPS");title.setTextSize(19);title.setTextColor(Color.rgb(15,45,75));title.setPadding(22,14,16,4);root.addView(title);
   // Map and electronic instrument panel each occupy exactly half of the flexible display area.
@@ -91,6 +93,11 @@ public class MainActivity extends Activity {
   LinearLayout third=new LinearLayout(this);third.setGravity(Gravity.CENTER_VERTICAL);
   voiceSwitch=new Switch(this);voiceSwitch.setText("음성 경고");voiceSwitch.setChecked(getSharedPreferences("settings",MODE_PRIVATE).getBoolean("voice",false));third.addView(voiceSwitch,new LinearLayout.LayoutParams(0,-2,1));voiceSwitch.setOnCheckedChangeListener((b,on)->saveSettings());
   vibrationSwitch=new Switch(this);vibrationSwitch.setText("진동 경고");vibrationSwitch.setChecked(getSharedPreferences("settings",MODE_PRIVATE).getBoolean("vibration",true));third.addView(vibrationSwitch,new LinearLayout.LayoutParams(0,-2,1));vibrationSwitch.setOnCheckedChangeListener((b,on)->saveSettings());controls.addView(third);
+  LinearLayout updateRow=new LinearLayout(this);updateRow.setGravity(Gravity.CENTER_VERTICAL);
+  TextView currentVersion=new TextView(this);currentVersion.setText("현재 버전 v"+BuildConfig.VERSION_CODE);currentVersion.setTextSize(12);
+  updateRow.addView(currentVersion,new LinearLayout.LayoutParams(0,-2,1));
+  Button updateButton=button("↻ 업데이트",updateRow);updateButton.setOnClickListener(v->updateManager.check());
+  controls.addView(updateRow);
   TextView caution=new TextView(this);caution.setText("※ 시험판 · 실제 도로 제한속도·단속카메라·사고·공사 데이터 미연동. 설정 기준은 법정 제한속도가 아닙니다. 운전 중 조작 금지.");caution.setTextSize(11);caution.setTextColor(Color.rgb(123,54,35));caution.setPadding(12,5,12,10);controls.addView(caution);root.addView(controls);setContentView(root);saveSettings();
  }
  private int dp(float v){return Math.round(getResources().getDisplayMetrics().density*v);}
@@ -129,6 +136,6 @@ public class MainActivity extends Activity {
  @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grants){super.onRequestPermissionsResult(code,permissions,grants);if(code==11&&grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED)start();}
  @Override protected void onStart(){super.onStart();IntentFilter f=new IntentFilter(LocationService.ACTION_LOCATION);if(Build.VERSION.SDK_INT>=33)registerReceiver(receiver,f,Context.RECEIVER_NOT_EXPORTED);else registerReceiver(receiver,f);}
  @Override protected void onStop(){try{unregisterReceiver(receiver);}catch(Exception ignored){}super.onStop();}
- @Override protected void onDestroy(){if(map!=null)map.destroy();super.onDestroy();}
+ @Override protected void onDestroy(){if(map!=null)map.destroy();if(updateManager!=null)updateManager.close();super.onDestroy();}
  private static final String MAP_HTML="<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1'><link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'><style>html,body,#map{height:100%;margin:0}#tip{position:absolute;z-index:999;top:8px;left:8px;background:white;padding:6px 10px;border-radius:8px;font:12px sans-serif}</style></head><body><div id='map'></div><div id='tip'>OpenStreetMap · 인터넷 필요</div><script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script><script>if(window.L){var m=L.map('map').setView([35.5384,129.3114],12),marker=null,circle=null,last=null,follow=true;L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(m);window.updateGPS=function(lat,lon,acc,f){last=[lat,lon];if(!marker)marker=L.circleMarker(last,{radius:8,color:'#1565c0',fillColor:'#2196f3',fillOpacity:1}).addTo(m);else marker.setLatLng(last);if(acc>0){if(!circle)circle=L.circle(last,{radius:acc,color:'#2196f3',weight:1,fillOpacity:.08}).addTo(m);else{circle.setLatLng(last);circle.setRadius(acc);}}if(f)m.setView(last,Math.max(m.getZoom(),15));};window.centerGPS=function(){if(last)m.setView(last,16);};m.on('dragstart',function(){follow=false;});}else document.getElementById('tip').innerText='지도 라이브러리 로드 실패 · 인터넷 확인';</script></body></html>";
 }
